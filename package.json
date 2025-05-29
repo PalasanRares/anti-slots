@@ -1,0 +1,32 @@
+{
+  "name": "pi_slots",
+  "version": "1.0.0",
+  "description": "",
+  "main": "dist/ts/main.js",
+  "build": {
+    "files": [
+      "dist/**/*",
+      "package.json"
+    ],
+    "directories": {
+      "output": "release/"
+    }
+  },
+  "scripts": {
+    "build": "tsc",
+    "start": "npm run build && electron .",
+    "package": "electron-packager . MyApp --platform=linux --arch=x64 --out=release/ --overwrite",
+    "make": "electron-builder --linux"
+  },
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@types/electron": "^1.6.12",
+    "@types/node": "^22.13.14",
+    "electron": "^35.1.2",
+    "electron-builder": "^26.0.12",
+    "electron-packager": "^17.1.2",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.8.2"
+  }
+}

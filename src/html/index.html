@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Electron App</title>
+    <link rel="stylesheet" href="../css/stylesheet.css"/>
+</head>
+<body id="doc-body">
+    <div class="line-marker" id="line-marker-1">1</div>
+    <div class="line-marker" id="line-marker-2">2</div>
+    <div class="line-marker" id="line-marker-3">3</div>
+    <div class="line-marker" id="line-marker-4">4</div>
+    <div class="line-marker" id="line-marker-5">5</div>
+    <div id="game-container">
+        <div id="slots-container">
+            <div id="0-0" class="slot-cell"></div>
+            <div id="0-1" class="slot-cell"></div>
+            <div id="0-2" class="slot-cell"></div>
+            <div id="0-3" class="slot-cell"></div>
+            <div id="0-4" class="slot-cell"></div>
+
+            <div id="1-0" class="slot-cell"></div>
+            <div id="1-1" class="slot-cell"></div>
+            <div id="1-2" class="slot-cell"></div>
+            <div id="1-3" class="slot-cell"></div>
+            <div id="1-4" class="slot-cell"></div>
+
+            <div id="2-0" class="slot-cell"></div>
+            <div id="2-1" class="slot-cell"></div>
+            <div id="2-2" class="slot-cell"></div>
+            <div id="2-3" class="slot-cell"></div>
+            <div id="2-4" class="slot-cell"></div>
+        </div>
+    </div>
+    <canvas id="line-canvas"></canvas>
+    <button id="double-button"></button>
+
+    <span id="current-amount-won"></span>
+
+    <div id="footer-container">
+        <div id="bet-select">
+            <div class="bet-select-cell bet-selected">0.2</div>
+            <div class="bet-select-cell">0.4</div>
+            <div class="bet-select-cell">0.6</div>
+            <div class="bet-select-cell">1.0</div>
+            <div class="bet-select-cell">2.0</div>
+        </div>
+        <div id="footer-button-selector">
+            <div id="lost-display">
+                Lost: <span id="amount-lost">0</span>
+            </div>
+            <button id="spin-button">Spin</button>
+            <div id="won-display">
+                Won: <span id="amount-won">0</span>
+            </div>
+        </div>
+    </div>
+
+    <div id="double-container">
+        <button id="exit-double-button">Exit</button>
+        <div id="last-cards-container">
+            <div id="last-drawn-cards">
+                <div class="drawn-card" id="last-drawn-card-1"></div>
+                <div class="drawn-card" id="last-drawn-card-2"></div>
+                <div class="drawn-card" id="last-drawn-card-3"></div>
+                <div class="drawn-card" id="last-drawn-card-4"></div>
+                <div class="drawn-card" id="last-drawn-card-5"></div>
+            </div>
+            <div id="card-flicker"></div>
+        </div>
+        <div id="select-double-container">
+            <button class="double-color-button" id="double-red">RED</button>
+            <button class="double-color-button" id="double-black">BLACK</button>
+        </div>
+    </div>
+    <div id="greyed-out-background"></div>
+
+    <script src="../js/renderer.js"></script>
+</body>
+</html>

@@ -1,0 +1,360 @@
+@font-face {
+    font-family: VanillaCreamOx;
+    src: url("../assets/VanillaCreamOx-Regular.otf");
+}
+
+:root {
+    --rust-color: white;
+}
+
+* {
+    font-family: VanillaCreamOx;
+    font-weight: bolder;
+}
+
+body {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 10px;
+    margin: 0;
+    background-image: url("../assets/RUSTY_BG_0.png");
+    transition: background-image 1s ease-in-out;
+}
+
+#slots-container {
+    height: auto;
+    width: 775px;
+    display: grid;
+    grid-template-rows: 1fr 1fr 1fr;
+    grid-template-columns: 1fr 1fr 1fr 1fr 1fr;
+    border-width: 5px;
+    border-style: solid none solid solid;
+}
+
+.slot-cell {
+    width: 150px;
+    height: 150px;
+    overflow: hidden;
+    position: relative;
+    background-color: var(--rust-color);
+    border-width: 5px;
+    border-style: none solid none none;
+}
+
+.slot-wrapper {
+    width: 150px;
+    position: absolute;
+    display: flex;
+    flex-direction: column;
+    animation: slideUp 0.75s linear infinite;
+}
+
+.slot-keyframe {
+    width: 150px;
+    height: 150px;
+}
+
+.winning-slot-keyframe {
+    animation: blinkRed 1s ease-in-out infinite;
+}
+
+.slot-keyframe img {
+    width: 150px;
+    height: 150px;
+}
+
+@keyframes blinkRed {
+    0% { background-color: var(--rust-color); }
+    50% { background-color: red; }
+    100% { background-color: var(--rust-color); }
+}
+
+@keyframes slideUp {
+    0% { transform: translateY(0); }
+    100% { transform: translateY(-1500px); }
+}
+
+#game-container {
+    display: flex;
+    justify-content: center;
+}
+
+.line-marker {
+    border-style: solid;
+    border-width: 5px;
+    padding: 5px;
+    font-size: 1.25em;
+    background-color: var(--rust-color);
+}
+
+#line-marker-1 {
+    position: fixed;
+    top: calc(460px / 6 + 10px - 38px + 2.5px);
+    left: 200px;
+}
+
+#line-marker-2 {
+    position: fixed;
+    top: calc(460px / 2 + 10px - 19px);
+    left: 200px;
+}
+
+#line-marker-3 {
+    position: fixed;
+    top: calc(460px / 2 + 460px / 3 + 10px - 38px + 2.5px);
+    left: 200px;
+}
+
+#line-marker-4 {
+    position: fixed;
+    top: calc(460px / 6 + 10px - 2.5px);
+    left: 200px;
+}
+
+#line-marker-5 {
+    position: fixed;
+    top: calc(460px / 2 + 460px / 3 + 10px - 2.5px);
+    left: 200px;
+}
+
+canvas {
+    position: fixed;
+    top: 10px;
+    left: 250px;
+    width: 780px;
+    height: 460px;
+}
+
+#footer-container {
+    width: 100%;
+    height: 240px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 25px;
+}
+
+#double-button {
+    position: fixed;
+    top: 595px;
+    left: 640px;
+    width: 100px;
+    height: 75px;
+    z-index: 0;
+    border-radius: 25%;
+    background-color: var(--rust-color);
+    border-style: solid;
+    border-color: black;
+    border-width: 5px;
+    background-image: url("../assets/DOUBLE.png");
+    background-size: 75px 75px;
+    background-position: 30px;
+}
+
+#double-button:hover {
+    background-image: url("../assets/DOUBLE_FIRE.png");
+    background-color: red;
+}
+
+#double-button:disabled {
+    background-image: url("../assets/DOUBLE_GREYED_OUT.png");
+    background-color: gray;
+}
+
+#spin-button {
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    background-color: var(--rust-color);
+    border-style: solid;
+    border-color: black;
+    border-width: 5px;
+    font-size: 2.5em;
+    z-index: 1;
+}
+
+#spin-button:hover {
+    background-color: red;
+}
+
+#spin-button:active {
+    background-color: var(--rust-color);
+}
+
+#spin-button:disabled {
+    background-color: gray;
+}
+
+#bet-select {
+    display: flex;
+    gap: 10px;
+}
+
+.bet-select-cell {
+    width: 150px;
+    height: 50px;
+    border-style: solid;
+    border-width: 5px;
+    line-height: 50px;
+    text-align: center;
+    font-size: 2em;
+    background-color: var(--rust-color);
+}
+
+.bet-select-cell:hover {
+    background-color: red;
+}
+
+.bet-selected {
+    background-color: red;
+}
+
+#footer-button-selector {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-around;
+    width: 100%;
+}
+
+#lost-display {
+    text-align: center;
+    vertical-align: middle;
+    line-height: 100px;
+    height: 100px;
+    width: 400px;
+    font-size: 3em;
+    background-color: var(--rust-color);
+    border-style: solid;
+    border-width: 5px;
+    border-color: black;
+}
+
+#won-display {
+    text-align: center;
+    vertical-align: middle;
+    line-height: 100px;
+    height: 100px;
+    width: 400px;
+    font-size: 3em;
+    background-color: var(--rust-color);
+    border-style: solid;
+    border-width: 5px;
+    border-color: black;
+}
+
+#double-container {
+    padding: 10px;
+    position: fixed;
+    border-style: solid;
+    border-color: black;
+    background-color: white;
+    border-width: 5px;
+    width: 770px;
+    height: 450px;
+    left: 250px;
+    top: 10px;
+    z-index: 3;
+    display: flex;
+    flex-direction: column;
+}
+
+.double-color-button {
+    width: 100px;
+    height: 100px;
+    border-style: solid;
+    border-color: black;
+    border-width: 5px;
+    border-radius: 50%;
+    font-size: 2em;
+    margin: 0 10px;
+}
+
+#last-cards-container {
+    flex-grow: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+}
+
+#last-drawn-cards {
+    display: flex;
+    flex-direction: row;
+}
+
+.drawn-card {
+    width: 100px;
+    height: 167px;
+    background-image: url("../assets/RED_ACE.png");
+    background-size: cover;
+    background-repeat: no-repeat;
+    background-position: center center;
+}
+
+#select-double-container {
+    flex-grow: 0;
+    display: flex;
+    justify-content: center;
+    align-items: end;
+}
+
+@keyframes flicker {
+    0% { background-image: url("../assets/RED_ACE.png"); }
+    100% { background-image: url("../assets/BLACK_ACE.png"); }
+}
+
+#card-flicker {
+    width: 100px;
+    height: 167px;
+    background-image: url("../assets/RED_ACE.png");
+    background-size: cover;
+    background-color: white;
+    background-position: center center;
+    animation-name: flicker;
+    animation-duration: 0.15s;
+    animation-iteration-count: infinite;
+}
+
+#exit-double-button {
+    border-color: black;
+    border-style: solid;
+    border-width: 5px;
+    font-size: 1.5em;
+    position: absolute;
+    right: 10px;
+    top: 10px;
+}
+
+#exit-double-button:hover {
+    background-color: red;
+}
+
+#double-red:hover {
+    background-color: red;
+}
+
+#double-black:hover {
+    background-color: black;
+    color: white;
+}
+
+#greyed-out-background {
+    position: fixed;
+    left: 0px;
+    top: 0px;
+    width: 1280px;
+    height: 720px;
+    background-color: rgba(128, 128, 128, 0.5);
+    z-index: 2;
+}
+
+#current-amount-won {
+    position: fixed;
+    left: 50%;
+    bottom: 10px;
+    transform: translate(-50%, 0);
+    font-size: 1.25em;
+    visibility: hidden;
+}
