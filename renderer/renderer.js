@@ -1,3 +1,5 @@
+import { fromEventPattern } from "rxjs"
+
 const spinButton = document.getElementById("spin-button")
 const doubleButton = document.getElementById("double-button")
 const docBody = document.getElementById("doc-body")
@@ -39,6 +41,14 @@ canvas.height = 460
 const rustyBackgroundThreshold = [100, 200, 300, 400]
 
 initScreen()
+
+const testRx = fromEventPattern(
+    (handler) => window.electron.test(handler)
+)
+
+testRx.subscribe(data => {
+    console.log(data)
+})
 
 async function spin(bet) {
     if (!spinState) {
@@ -87,7 +97,7 @@ function onDoubleButtonPress(color) {
     document.getElementById("exit-double-button").disabled = true
     const randomColor = Math.random() < 0.5 ? "RED" : "BLACK"
     cardFlicker.style.animationName = "none"
-    cardFlicker.style.backgroundImage = `url(../assets/${randomColor}_ACE.png)`
+    cardFlicker.style.backgroundImage = `url(./${randomColor}_ACE.png)`
     let won = true
     if (randomColor === color) {
         lastWin *= 2;
@@ -114,7 +124,7 @@ function onDoubleButtonPress(color) {
 function checkRustThreshold() {
     for (let i = rustyBackgroundThreshold.length - 1; i >= 0; i--) {
         if (amountLost > rustyBackgroundThreshold[i]) {
-            docBody.style.backgroundImage = `url(../assets/RUSTY_BG_${i + 1}.png)`
+            docBody.style.backgroundImage = `url(./RUSTY_BG_${i + 1}.png)`
             break;
         }
     }
@@ -164,7 +174,7 @@ function startSpinForColumn(column) {
             const divKeyframe = document.createElement("div")
             divKeyframe.className = "slot-keyframe"
             const imgKeyframe = document.createElement("img")
-            imgKeyframe.setAttribute("src", `../assets/${slotKeyframes[(k + offset) % slotKeyframes.length]}.png`)
+            imgKeyframe.setAttribute("src", `./${slotKeyframes[(k + offset) % slotKeyframes.length]}.png`)
             divKeyframe.appendChild(imgKeyframe)
             slotWrapper.appendChild(divKeyframe)
         }
@@ -175,12 +185,12 @@ function startSpinForColumn(column) {
 
 function stopSpinForColumn(column, spin) {
     for (let row = 0; row < noRows; row++) {
-        slotCell = document.getElementById(`${row}-${column}`)
+        const slotCell = document.getElementById(`${row}-${column}`)
         slotCell.innerHTML = ""
         const slotKeyframe = document.createElement("div")
         slotKeyframe.className = "slot-keyframe"
         const imgKeyframe = document.createElement("img")
-        imgKeyframe.setAttribute("src", `../assets/${spin[row][column].name}.png`)
+        imgKeyframe.setAttribute("src", `./${spin[row][column].name}.png`)
         slotKeyframe.appendChild(imgKeyframe)
         slotCell.appendChild(slotKeyframe)
     }
@@ -211,14 +221,14 @@ function initScreen() {
             slotKeyframe.className = "slot-keyframe"
             const imgKeyframe = document.createElement("img")
             const randomKeyframe = Math.floor(Math.random() * slotKeyframes.length)
-            imgKeyframe.setAttribute("src", `../assets/${slotKeyframes[randomKeyframe]}.png`)
+            imgKeyframe.setAttribute("src", `./${slotKeyframes[randomKeyframe]}.png`)
             slotKeyframe.appendChild(imgKeyframe)
             slotCell.appendChild(slotKeyframe)
         }
     }
     for (let i = 1; i <= 5; i++) {
         let cardColor = Math.random() < 0.5 ? "RED" : "BLACK"
-        document.getElementById(`last-drawn-card-${i}`).style.backgroundImage = `url(../assets/${cardColor}_ACE.png)`
+        document.getElementById(`last-drawn-card-${i}`).style.backgroundImage = `url(./${cardColor}_ACE.png)`
         lastDrawnCards.push(cardColor)
     }
     document.getElementById("exit-double-button").addEventListener("click", () => {
@@ -229,7 +239,7 @@ function initScreen() {
 
 function drawLastDrawnCards() {
     for (let i = 0; i < 5; i++) {
-        document.getElementById(`last-drawn-card-${i + 1}`).style.backgroundImage = `url(../assets/${lastDrawnCards[i]}_ACE.png)`
+        document.getElementById(`last-drawn-card-${i + 1}`).style.backgroundImage = `url(./${lastDrawnCards[i]}_ACE.png)`
     }
 }
 

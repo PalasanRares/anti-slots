@@ -3,6 +3,8 @@ import { weightedRandomPrize } from './utils/weighted-random-prize';
 import { Spinner } from './domain/spinner';
 import { Prize } from './domain/prize';
 import { SpinResult } from './domain/spin-result';
+import { interval, Observable, Subject } from 'rxjs';
+import path from 'path';
 
 let mainWindow: BrowserWindow | null = null;
 
@@ -21,14 +23,21 @@ function createWindow() {
     frame: false,
     show: false
   });
-  mainWindow.loadFile('src/html/index.html');
+  mainWindow.loadFile(path.join(__dirname, 'renderer/index.html'));
   mainWindow.show();
 }
+
+const testObservable = interval(2000) 
 
 app.whenReady().then(() => {
     ipcMain.handle("action:spin", async (_, bet) => {
       return spin(bet)
     });
+    testObservable.subscribe(data => {
+      if (mainWindow && mainWindow.webContents) {
+        mainWindow.webContents.send("action:test", data)
+      }
+    })
     createWindow()
 });
 
