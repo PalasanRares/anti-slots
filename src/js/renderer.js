@@ -134,7 +134,7 @@ doubleButton.addEventListener("click", async () => {
 })
 
 document.addEventListener("keydown", async (event) => {
-    if (event.key === " ") {
+    if (event.key === " " && !spinState) {
         amountWon += lastWin
         amountWon = Number(amountWon.toFixed(2))
         amountWonSpan.innerHTML = amountWon
