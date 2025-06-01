@@ -18,7 +18,7 @@ function createWindow() {
       preload: __dirname + '/preload.js'
     },
     resizable: false,
-    // frame: false,
+    frame: false,
     show: false
   });
   mainWindow.loadFile('src/html/index.html');

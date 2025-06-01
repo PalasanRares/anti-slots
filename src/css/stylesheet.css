@@ -353,8 +353,13 @@ canvas {
 #current-amount-won {
     position: fixed;
     left: 50%;
-    bottom: 10px;
+    bottom: 5px;
     transform: translate(-50%, 0);
     font-size: 1.25em;
     visibility: hidden;
+    background-color: white;
+    border-color: black;
+    border-width: 5px;
+    padding: 2px;
+    border-style: solid;
 }
