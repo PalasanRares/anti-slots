@@ -1,27 +1,32 @@
-import { weightedRandomPrize } from "../utils/weighted-random-prize";
-import { Modifier, ModifierMap, ModifierType } from "./modifier";
-import { Prize, PrizeArray } from "./prize";
-import { LineWon, ScatterWin, SpinResult } from "./spin-result";
+import { weightedRandomPrize } from "../utils/weighted-random-symbol";
+import { Modifier } from "../domain/modifier";
+import { Subject } from "rxjs";
+import { SpinResult } from "../domain/spin-result";
+import { WinningLine } from "../domain/winning-line";
+import { Line } from "../domain/line.enum";
+import { numbericEnumValues } from "../utils/enum-values";
+import { Column } from "../domain/column.enum";
 
 export class Spinner {
 
     private static instance: Spinner | null = null
 
-    private static readonly NO_ROWS = 3;
-    private static readonly NO_COLUMNS = 5;
-
     private constructor() {}
 
-    public generateSpin(bet: number): SpinResult {
-        const spin: Prize[][] = [];
+    public spinResult: Subject<SpinResult> = new Subject()
+
+    public spin(bet: number): SpinResult {
+        const winningLines: WinningLine[] = []
+
         const wasScatterGenerated: boolean[] = []
-        for (let row = 0; row < Spinner.NO_COLUMNS; row++) {
+        for (let _ in numbericEnumValues(Line)) {
             wasScatterGenerated.push(false);
         }
-        for (let row = 0; row < Spinner.NO_ROWS; row++) {
-            const rowSpin: Prize[] = []
-            for (let column = 0; column < Spinner.NO_COLUMNS; column++) {
-                let randomPrize = weightedRandomPrize();
+
+        for (let line of numbericEnumValues(Line)) {
+            const lineSymbols: Symbol[] = []
+            for (let column in numbericEnumValues(Column)) {
+                let randomSymbol = weightedRandomPrize();
                 while (wasScatterGenerated[column] && randomPrize.modifierType === ModifierType.SCATTER) {
                     randomPrize = weightedRandomPrize();
                 }

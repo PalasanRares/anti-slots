@@ -1,7 +1,7 @@
 import { app, BrowserWindow, dialog, ipcMain } from 'electron';
-import { weightedRandomPrize } from './utils/weighted-random-prize';
-import { Spinner } from './domain/spinner';
-import { Prize } from './domain/prize';
+import { weightedRandomPrize } from './utils/weighted-random-symbol';
+import { Spinner } from './business/spinner';
+import { Prize } from './domain/symbol';
 import { SpinResult } from './domain/spin-result';
 import { interval, Observable, Subject } from 'rxjs';
 import path from 'path';
