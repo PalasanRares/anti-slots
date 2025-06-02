@@ -1,21 +1,12 @@
-import { Prize } from "./prize";
-
-export interface LineWon {
-    line: number,
-    symbols: number,
-    prize: number
-}
-
-export interface ScatterWin {
-    isWinning: boolean,
-    numberOfScatters: number,
-    prize: number,
-    positions: [number, number][]
-}
+import { ScatterWin } from "./scatter-win";
+import { WinningLine } from "./winning-line";
+import { Symbol } from "./symbol";
 
 export interface SpinResult {
-    spin: Prize[][],
-    linesWon: LineWon[],
-    totalPrize: number,
-    scatterWin: ScatterWin
+    result: Symbol[][]
+    winningLines: WinningLine[],
+    totalWon: number,
+    scatterWin?: ScatterWin,
+    // FIXME Remove this after migrating full to MVVM
+    bet: number
 }

@@ -1,51 +1,46 @@
-export enum ModifierType {
-    LOW,
-    MEDIUM,
-    HIGH,
-    AMAZING,
-    SCATTER,
-    JACKPOT
-}
+export abstract class Modifier {
+    private constructor(
+        public readonly x2: number,
+        public readonly x3: number,
+        public readonly x4: number,
+        public readonly x5: number
+    ) {}
 
-export interface Modifier {
-    x2?: number,
-    x3: number,
-    x4: number,
-    x5: number
-}
+    [key: string]: any
 
-export const ModifierMap: Record<ModifierType, Modifier> = {
-    [ModifierType.LOW]: {
-        x3: 0.25,
-        x4: 1,
-        x5: 5
-    },
-    [ModifierType.MEDIUM]: {
-        x3: 0.5,
-        x4: 2,
-        x5: 10
-    },
-    [ModifierType.HIGH]: {
-        x2: 0.25,
-        x3: 2,
-        x4: 5,
-        x5: 25
-    },
-    [ModifierType.AMAZING]: {
-        x2: 0.5,
-        x3: 4,
-        x4: 20,
-        x5: 100
-    },
-    [ModifierType.SCATTER]: {
-        x3: 2,
-        x4: 15,
-        x5: 50
-    },
-    [ModifierType.JACKPOT]: {
-        x2: 0.5,
-        x3: 5,
-        x4: 50,
-        x5: 250
+    public static readonly Low = new class extends Modifier {
+        public constructor() {
+            super(0, 0.25, 1, 5)
+        }
+    }
+
+    public static readonly Medium = new class extends Modifier {
+        public constructor() {
+            super(0, 0.5, 2, 10)
+        }
+    }
+
+    public static readonly High = new class extends Modifier {
+        public constructor() {
+            super(0.25, 2, 5, 25)
+        }
+    }
+
+    public static readonly Amazing = new class extends Modifier {
+        public constructor() {
+            super(0.5, 4, 20, 100)
+        }
+    }
+
+    public static readonly Scatter = new class extends Modifier {
+        public constructor() {
+            super(0, 2, 15, 50)
+        }
+    }
+
+    public static readonly Jackpot = new class extends Modifier {
+        public constructor() {
+            super(0.5, 5, 50, 250)
+        }
     }
 }
