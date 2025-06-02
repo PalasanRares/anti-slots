@@ -42,44 +42,45 @@ const rustyBackgroundThreshold = [100, 200, 300, 400]
 
 initScreen()
 
-const testRx = fromEventPattern(
-    (handler) => window.electron.test(handler)
+const spinResultObservable = fromEventPattern(
+    (handler) => window.electron.spinResult(handler)
 )
 
-testRx.subscribe(data => {
+spinResultObservable.subscribe(data => {
     console.log(data)
+    spinResult = data
+    lastWin = spinResult.totalWon
+    amountLost += Number.parseFloat(spinResult.bet)
+
+    checkRustThreshold()
+
+    lastWin = Number(lastWin.toFixed(2))
+    amountLost = Number(amountLost.toFixed(2))
+
+    currentAmountWon.style.visibility = "hidden"
+    currentAmountWon.innerHTML = `Amount won: ${lastWin}`
+
+    amountLostSpan.innerHTML = amountLost
+    spinButton.disabled = true
+    doubleButton.disabled = true
+    context.clearRect(0, 0, 780, 460)
+    spinState = "spinning"
+    let timeout = 0
+    for (let i = 0; i < noRows; i++) {
+        for (let j = 0; j < noColumns; j++) {
+            document.getElementById(`${i}-${j}`).classList.remove("winning-slot-keyframe")
+        }
+    }
+    for (let j = 0; j < noColumns; j++) {
+        setTimeout(() => startSpinForColumn(j), timeout)
+        setTimeout(() => stopSpinForColumn(j, spinResult.result), 2000 + timeout)
+        timeout += 200
+        }
 })
 
 async function spin(bet) {
     if (!spinState) {
-        spinResult = await window.electron.spin(bet);
-        lastWin = spinResult.totalPrize
-        amountLost += Number.parseFloat(bet)
-
-        checkRustThreshold()
-
-        lastWin = Number(lastWin.toFixed(2))
-        amountLost = Number(amountLost.toFixed(2))
-
-        currentAmountWon.style.visibility = "hidden"
-        currentAmountWon.innerHTML = `Amount won: ${lastWin}`
-
-        amountLostSpan.innerHTML = amountLost
-        spinButton.disabled = true
-        doubleButton.disabled = true
-        context.clearRect(0, 0, 780, 460)
-        spinState = "spinning"
-        let timeout = 0
-        for (let i = 0; i < noRows; i++) {
-            for (let j = 0; j < noColumns; j++) {
-                document.getElementById(`${i}-${j}`).classList.remove("winning-slot-keyframe")
-            }
-        }
-        for (let j = 0; j < noColumns; j++) {
-            setTimeout(() => startSpinForColumn(j), timeout)
-            setTimeout(() => stopSpinForColumn(j, spinResult.spin), 2000 + timeout)
-            timeout += 200
-        }
+        window.electron.spin(bet);
     }
 }
 
@@ -183,14 +184,14 @@ function startSpinForColumn(column) {
     }
 }
 
-function stopSpinForColumn(column, spin) {
+function stopSpinForColumn(column, result) {
     for (let row = 0; row < noRows; row++) {
         const slotCell = document.getElementById(`${row}-${column}`)
         slotCell.innerHTML = ""
         const slotKeyframe = document.createElement("div")
         slotKeyframe.className = "slot-keyframe"
         const imgKeyframe = document.createElement("img")
-        imgKeyframe.setAttribute("src", `./${spin[row][column].name}.png`)
+        imgKeyframe.setAttribute("src", `./${result[row][column].name}.png`)
         slotKeyframe.appendChild(imgKeyframe)
         slotCell.appendChild(slotKeyframe)
     }
@@ -200,11 +201,11 @@ function stopSpinForColumn(column, spin) {
 }
 
 function onSpinStop() {
-    for (let lineWon of spinResult.linesWon) {
-        drawLine(lineWon.line)
-        highlightWinningCells(lineWon)
+    for (let winningLine of spinResult.winningLines) {
+        drawLine(winningLine.line)
+        highlightWinningCells(winningLine)
     }
-    if (spinResult.scatterWin.isWinning) {
+    if (spinResult.scatterWin) {
         highlightWinningScatterCells(spinResult.scatterWin.positions)
     }
     currentAmountWon.style.visibility = "visible"
@@ -245,15 +246,15 @@ function drawLastDrawnCards() {
 
 // TODO fix this shit
 function highlightWinningCells(lineWon) {
-    if (lineWon.line <= 3) {
-        for (let i = 0; i < lineWon.symbols; i++) {
-            document.getElementById(`${lineWon.line - 1}-${i}`).classList.add("winning-slot-keyframe")
+    if (lineWon.line <= 2) {
+        for (let i = 0; i < lineWon.noSymbols; i++) {
+            document.getElementById(`${lineWon.line}-${i}`).classList.add("winning-slot-keyframe")
         }
-    } else if (lineWon.line === 4) {
+    } else if (lineWon.line === 3) {
         let i = 0;
         let j = 0;
         let changeDirection = false;
-        while (j < lineWon.symbols) {
+        while (j < lineWon.noSymbols) {
             document.getElementById(`${i}-${j}`).classList.add("winning-slot-keyframe")
             if (i < noRows - 1 && !changeDirection) {
                 i += 1;
@@ -265,11 +266,11 @@ function highlightWinningCells(lineWon) {
             }
             j += 1;
         }
-    } else if (lineWon.line === 5) {
+    } else if (lineWon.line === 4) {
         let i = 2
         let j = 0
         let changeDirection = false
-        while (j < lineWon.symbols) {
+        while (j < lineWon.noSymbols) {
             document.getElementById(`${i}-${j}`).classList.add("winning-slot-keyframe")
             if (i > 0 && !changeDirection) {
                 i -= 1;
@@ -285,26 +286,27 @@ function highlightWinningCells(lineWon) {
 }
 
 function highlightWinningScatterCells(positions) {
-    for ([x, y] of positions) {
+    console.log(positions)
+    for (let [x, y] of positions) {
         document.getElementById(`${x}-${y}`).classList.add("winning-slot-keyframe")
     }
 }
 
 function drawLine(lineNumber) {
     switch (lineNumber) {
-        case 1:
+        case 0:
             drawLineOne()
             break;
-        case 2:
+        case 1:
             drawLineTwo()
             break;
-        case 3:
+        case 2:
             drawLineThree()
             break;
-        case 4:
+        case 3:
             drawLineFour()
             break;
-        case 5:
+        case 4:
             drawLineFive()
             break;
     }

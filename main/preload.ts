@@ -2,5 +2,5 @@ import { contextBridge, ipcRenderer } from 'electron';
 
 contextBridge.exposeInMainWorld('electron', {
   spin: (bet: number) => ipcRenderer.invoke("action:spin", bet),
-  test: (callback: any) => ipcRenderer.on("action:test", (_, data) => callback(data))
+  spinResult: (callback: any) => ipcRenderer.on("rx:spinResult", (_, data) => callback(data))
 });
