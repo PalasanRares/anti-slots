@@ -1,8 +1,7 @@
 import { app, BrowserWindow, dialog, ipcMain } from 'electron';
-import { Spinner } from './business/spinner';
-import { SpinResult } from './domain/spin-result';
-import { interval, Observable, Subject } from 'rxjs';
 import path from 'path';
+import { SlotsService } from './business/slots-service';
+import { DoublingColor } from './domain/doubling-color.enum';
 
 let mainWindow: BrowserWindow | null = null;
 
@@ -21,8 +20,6 @@ function createWindow() {
     mainWindow.show();
 }
 
-const testObservable = interval(2000) 
-
 app.whenReady().then(() => {
     initIpcActions()
     initSubjects()
@@ -30,15 +27,52 @@ app.whenReady().then(() => {
 });
 
 function initIpcActions() {
-    ipcMain.handle("action:spin", async (_, bet) => {
-        Spinner.getInstance().spin(bet)
+    ipcMain.handle("action:spin", async (_) => {
+        SlotsService.getInstance().spin();
     });
+    ipcMain.handle("action:selectBet", async (_, bet) => {
+        SlotsService.getInstance().selectBet(bet)
+    })
+    ipcMain.handle("action:clickDoubleButton", async (_) => {
+        SlotsService.getInstance().enterDoubling()
+    })
+    ipcMain.handle("action:clickRedDoubleButton", async (_) => {
+        SlotsService.getInstance().double(DoublingColor.RED)
+    })
+    ipcMain.handle("action:clickBlackDoubleButton", async (_) => {
+        SlotsService.getInstance().double(DoublingColor.BLACK)
+    })
+    ipcMain.handle("action:clickExitDoubleButton", async (_) => {
+        SlotsService.getInstance().exitDoubling()
+    })
 }
 
 function initSubjects() {
-    Spinner.getInstance().spinResultObservable.subscribe(spinResult => {
-        mainWindow?.webContents.send("rx:spinResult", spinResult)
+    const slotsService: SlotsService = SlotsService.getInstance();
+    slotsService.spinResultObservable.subscribe(spinResult => {
+        mainWindow?.webContents.send("rx:spinResultObservable", spinResult)
     })
+    slotsService.amountWonObservable.subscribe(amountWon => {
+        mainWindow?.webContents.send("rx:amountWonObservable", amountWon)
+    })
+    slotsService.amountLostObservable.subscribe(amountLost => {
+        mainWindow?.webContents.send("rx:amountLostObservable", amountLost)
+    })
+    slotsService.spinStateObservable.subscribe(spinState => {
+        mainWindow?.webContents.send("rx:spinStateObservable", spinState)
+    })
+    slotsService.selectedBetObservable.subscribe(selectedBet => {
+        mainWindow?.webContents.send("rx:selectedBetObservable", selectedBet)
+    })
+    slotsService.currentWinObservable.subscribe(currentWin => {
+        mainWindow?.webContents.send("rx:currentWinObservable", currentWin);
+    })
+    slotsService.randomChosenColorObservable.subscribe(randomChosenColor => {
+        mainWindow?.webContents.send("rx:randomChosenColorObservable", randomChosenColor)
+    })
+    slotsService.rustLevelObservable.subscribe(rustLevel => {
+        mainWindow?.webContents.send("rx:rustLevelObservable", rustLevel)
+    });
 }
 
 app.on('window-all-closed', () => {

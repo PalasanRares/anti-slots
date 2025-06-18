@@ -1,374 +1,408 @@
-import { fromEventPattern } from "rxjs"
+import { combineLatest, fromEventPattern, map, Observable } from "rxjs"
+import { NO_ROWS, NO_COLUMNS } from "./constants"
+import { SlotsBinding } from "./slots-binding"
 
-const spinButton = document.getElementById("spin-button")
-const doubleButton = document.getElementById("double-button")
-const docBody = document.getElementById("doc-body")
+class Renderer {
+    static instance = undefined
 
-const doubleContainer = document.getElementById("double-container")
-const greyedOutBackground = document.getElementById("greyed-out-background")
+    #spinResultObservable = fromEventPattern(
+        (handler) => window.electron.spinResultObservable(handler)
+    )
 
-const doubleRedButton = document.getElementById("double-red")
-const doubleBlackButton = document.getElementById("double-black")
-const cardFlicker = document.getElementById("card-flicker")
+    #amountWonObservable = fromEventPattern(
+        (handler) => window.electron.amountWonObservable(handler)
+    )
 
-doubleContainer.style.visibility = "hidden"
-greyedOutBackground.style.visibility = "hidden"
+    #amountLostObservable = fromEventPattern(
+        (handler) => window.electron.amountLostObservable(handler)
+    )
 
-const slotKeyframes = ["ACE", "DENIS", "J", "K", "KANYE", "Q", "RARES", "TOILET", "TUDOR", "VIRUS"]
-const lastDrawnCards = []
+    #spinStateObservable = fromEventPattern(
+        (handler) => window.electron.spinStateObservable(handler)
+    )
 
-const noRows = 3
-const noColumns = 5
+    #selectedBetObservable = fromEventPattern(
+        (handler) => window.electron.selectedBetObservable(handler)
+    )
 
-let spinState = null
-let spinResult
+    #currentWinObservable = fromEventPattern(
+        (handler) => window.electron.currentWinObservable(handler)
+    )
 
-let selectedBetElement = document.getElementsByClassName("bet-select-cell bet-selected")[0]
-let selectedBetAmount = 0.2
-let lastWin = 0
-let amountWon = 0
-let amountLost = 0
+    #randomChosenColorObservable = fromEventPattern(
+        (handler) => window.electron.randomChosenColorObservable(handler)
+    )
 
-const canvas = document.getElementById("line-canvas")
-const amountLostSpan = document.getElementById("amount-lost")
-const amountWonSpan = document.getElementById("amount-won")
-const context = canvas.getContext("2d")
-const currentAmountWon = document.getElementById("current-amount-won")
+    #rustLevelObservable = fromEventPattern(
+        (handler) => window.electron.rustLevelObservable(handler)
+    )
 
-canvas.width = 780
-canvas.height = 460
+    binding
 
-const rustyBackgroundThreshold = [100, 200, 300, 400]
+    constructor() {
+        this.binding = new SlotsBinding(document)
+        this.initSubscriptions()
+        this.initEventListeners()
+        this.initScreen()
+    }
 
-initScreen()
+    initSubscriptions() {
+        this.#spinStateObservable.subscribe(this.onSpinStateChanged.bind(this))
 
-const spinResultObservable = fromEventPattern(
-    (handler) => window.electron.spinResult(handler)
-)
+        combineLatest([this.#spinResultObservable, this.#spinStateObservable])
+            .subscribe(this.onSpinResult.bind(this))
 
-spinResultObservable.subscribe(data => {
-    console.log(data)
-    spinResult = data
-    lastWin = spinResult.totalWon
-    amountLost += Number.parseFloat(spinResult.bet)
+        this.#selectedBetObservable
+            .pipe(map(this.mapSelectedBetToCells.bind(this)))
+            .subscribe(this.onSelectBet.bind(this))
 
-    checkRustThreshold()
+        this.#amountWonObservable.subscribe(this.onAmountWon.bind(this))
+        this.#amountLostObservable.subscribe(this.onAmountLost.bind(this))
+        this.#currentWinObservable.subscribe(this.onCurrentWin.bind(this))
+        this.#randomChosenColorObservable.subscribe(this.onRandomChosenColor.bind(this))
+        this.#rustLevelObservable.subscribe(this.onRustLevel.bind(this))
+    }
 
-    lastWin = Number(lastWin.toFixed(2))
-    amountLost = Number(amountLost.toFixed(2))
+    initEventListeners() {
+        this.binding.spinButton.addEventListener("click", this.onSpinButtonClick.bind(this))
+        this.binding.betSelectCells.forEach(betSelectCell => {
+            betSelectCell.addEventListener("click", clickEvent => {
+                window.electron.selectBet(Number.parseFloat(clickEvent.target.innerHTML))
+            })
+        })
+        this.binding.doubleButton.addEventListener("click", window.electron.clickDoubleButton)
+        this.binding.doubleRedButton.addEventListener("click", window.electron.clickRedDoubleButton)
+        this.binding.doubleBlackButton.addEventListener("click", window.electron.clickBlackDoubleButton)
+        this.binding.exitDoubleButton.addEventListener("click", window.electron.clickExitDoubleButton)
+    }
 
-    currentAmountWon.style.visibility = "hidden"
-    currentAmountWon.innerHTML = `Amount won: ${lastWin}`
+    mapSelectedBetToCells(selectedBet) {
+        return [
+            this.mapSelectedBetToCell(selectedBet.current),
+            this.mapSelectedBetToCell(selectedBet.last)
+        ]
+    }
 
-    amountLostSpan.innerHTML = amountLost
-    spinButton.disabled = true
-    doubleButton.disabled = true
-    context.clearRect(0, 0, 780, 460)
-    spinState = "spinning"
-    let timeout = 0
-    for (let i = 0; i < noRows; i++) {
-        for (let j = 0; j < noColumns; j++) {
-            document.getElementById(`${i}-${j}`).classList.remove("winning-slot-keyframe")
+    mapSelectedBetToCell(selectedBet) {
+        switch (selectedBet) {
+            case 0.2:
+                return this.binding.betSelectCells[0]
+            case 0.4:
+                return this.binding.betSelectCells[1]
+            case 0.6:
+                return this.binding.betSelectCells[2]
+            case 1:
+                return this.binding.betSelectCells[3]
+            case 2:
+                return this.binding.betSelectCells[4]
         }
     }
-    for (let j = 0; j < noColumns; j++) {
-        setTimeout(() => startSpinForColumn(j), timeout)
-        setTimeout(() => stopSpinForColumn(j, spinResult.result), 2000 + timeout)
-        timeout += 200
+
+    initScreen() {
+        for (let row = 0; row < NO_ROWS; row++) {
+            for (let column = 0; column < NO_COLUMNS; column++) {
+                const slotKeyframe = document.createElement("div")
+                slotKeyframe.className = "slot-keyframe"
+                const imgKeyframe = document.createElement("img")
+                const randomKeyframe = Math.floor(Math.random() * slotKeyframes.length)
+                imgKeyframe.setAttribute("src", `./${slotKeyframes[randomKeyframe]}.png`)
+                slotKeyframe.appendChild(imgKeyframe)
+                this.binding.slotCells[row][column].appendChild(slotKeyframe)
+            }
         }
-})
-
-async function spin(bet) {
-    if (!spinState) {
-        window.electron.spin(bet);
+        this.binding.canvas.width = 780
+        this.binding.canvas.height = 460
     }
-}
 
-doubleRedButton.addEventListener("click", () => {
-    onDoubleButtonPress("RED")
-})
-
-doubleBlackButton.addEventListener("click", () => {
-    onDoubleButtonPress("BLACK")
-})
-
-function onDoubleButtonPress(color) {
-    doubleRedButton.disabled = true
-    doubleBlackButton.disabled = true
-    document.getElementById("exit-double-button").disabled = true
-    const randomColor = Math.random() < 0.5 ? "RED" : "BLACK"
-    cardFlicker.style.animationName = "none"
-    cardFlicker.style.backgroundImage = `url(./${randomColor}_ACE.png)`
-    let won = true
-    if (randomColor === color) {
-        lastWin *= 2;
-        currentAmountWon.innerHTML = `Amount won: ${lastWin}`
-    } else {
-        lastWin = 0
-        currentAmountWon.innerHTML = `Amount won: ${lastWin}`
-        won = false
-    }
-    setTimeout(() => {
-        doubleRedButton.disabled = false
-        doubleBlackButton.disabled = false
-        document.getElementById("exit-double-button").disabled = false
-        cardFlicker.style.animationName = "flicker"
-        lastDrawnCards.pop()
-        lastDrawnCards.unshift(randomColor)
-        drawLastDrawnCards()
-        if (!won) {
-            stopDoubleDialogue()
-        }
-    }, 2000)
-}
-
-function checkRustThreshold() {
-    for (let i = rustyBackgroundThreshold.length - 1; i >= 0; i--) {
-        if (amountLost > rustyBackgroundThreshold[i]) {
-            docBody.style.backgroundImage = `url(./RUSTY_BG_${i + 1}.png)`
-            break;
+    onSpinResult([spinResult, spinState]) {
+        if (spinState === "NOT_SPINNING") {
+            this.stopSpinningAnimation(spinResult)
         }
     }
-}
 
-spinButton.addEventListener("click", async () => {
-    amountWon += lastWin
-    amountWon = Number(amountWon.toFixed(2))
-    amountWonSpan.innerHTML = amountWon
-    await spin(selectedBetAmount)
-})
-
-doubleButton.addEventListener("click", async () => {
-    if (lastWin !== 0) {
-        startDoubleDialogue()
+    onSelectBet([currentSelectedBetCell, lastSelectedBetCell]) {
+        lastSelectedBetCell.classList.remove("bet-selected")
+        currentSelectedBetCell.classList.add("bet-selected")
     }
-})
 
-document.addEventListener("keydown", async (event) => {
-    if (event.key === " " && !spinState) {
-        amountWon += lastWin
-        amountWon = Number(amountWon.toFixed(2))
-        amountWonSpan.innerHTML = amountWon
-        await spin(selectedBetAmount)
+    onSpinButtonClick() {
+        window.electron.spin();
     }
-})
 
-function startDoubleDialogue() {
-    cardFlicker.style.animationName = "flicker"
-    doubleContainer.style.visibility = "visible"
-    greyedOutBackground.style.visibility = "visible"
-}
-
-function stopDoubleDialogue() {
-    doubleContainer.style.visibility = "hidden"
-    greyedOutBackground.style.visibility = "hidden"
-}
-
-function startSpinForColumn(column) {
-    let offset = 0;
-    for (let row = 0; row < noRows; row++) {
-        const slotCell = document.getElementById(`${row}-${column}`)
-        slotCell.innerHTML = ""
-        const slotWrapper = document.createElement("div")
-        slotWrapper.className = "slot-wrapper"
-        for (let k = 0; k < slotKeyframes.length + 1; k++) {
-            const divKeyframe = document.createElement("div")
-            divKeyframe.className = "slot-keyframe"
-            const imgKeyframe = document.createElement("img")
-            imgKeyframe.setAttribute("src", `./${slotKeyframes[(k + offset) % slotKeyframes.length]}.png`)
-            divKeyframe.appendChild(imgKeyframe)
-            slotWrapper.appendChild(divKeyframe)
+    startSpinForColumn(column) {
+        let offset = 0;
+        for (let row = 0; row < NO_ROWS; row++) {
+            const slotCell = this.binding.slotCells[row][column]
+            slotCell.innerHTML = ""
+            const slotWrapper = document.createElement("div")
+            slotWrapper.className = "slot-wrapper"
+            for (let k = 0; k < slotKeyframes.length + 1; k++) {
+                const divKeyframe = document.createElement("div")
+                divKeyframe.className = "slot-keyframe"
+                const imgKeyframe = document.createElement("img")
+                imgKeyframe.setAttribute("src", `./${slotKeyframes[(k + offset) % slotKeyframes.length]}.png`)
+                divKeyframe.appendChild(imgKeyframe)
+                slotWrapper.appendChild(divKeyframe)
+            }
+            slotCell.appendChild(slotWrapper)
+            offset += 1;
         }
-        slotCell.appendChild(slotWrapper)
-        offset += 1;
     }
-}
 
-function stopSpinForColumn(column, result) {
-    for (let row = 0; row < noRows; row++) {
-        const slotCell = document.getElementById(`${row}-${column}`)
-        slotCell.innerHTML = ""
-        const slotKeyframe = document.createElement("div")
-        slotKeyframe.className = "slot-keyframe"
-        const imgKeyframe = document.createElement("img")
-        imgKeyframe.setAttribute("src", `./${result[row][column].name}.png`)
-        slotKeyframe.appendChild(imgKeyframe)
-        slotCell.appendChild(slotKeyframe)
+    drawLineOne() {
+        this.binding.canvasContext.beginPath()
+        this.binding.canvasContext.moveTo(0, 460 / 6)
+        this.binding.canvasContext.lineTo(780, 460 / 6)
+        this.binding.canvasContext.strokeStyle = "#7393B3"
+        this.binding.canvasContext.lineWidth = 2
+        this.binding.canvasContext.stroke()
     }
-    if (column === noColumns - 1) {
-        onSpinStop()
-    }
-}
 
-function onSpinStop() {
-    for (let winningLine of spinResult.winningLines) {
-        drawLine(winningLine.line)
-        highlightWinningCells(winningLine)
+    drawLineTwo() {
+        this.binding.canvasContext.beginPath()
+        this.binding.canvasContext.moveTo(0, 230)
+        this.binding.canvasContext.lineTo(780, 230)
+        this.binding.canvasContext.strokeStyle = "#B2BEB5"
+        this.binding.canvasContext.lineWidth = 2
+        this.binding.canvasContext.stroke()
     }
-    if (spinResult.scatterWin) {
-        highlightWinningScatterCells(spinResult.scatterWin.positions)
-    }
-    currentAmountWon.style.visibility = "visible"
-    spinState = null
-    spinButton.disabled = false
-    doubleButton.disabled = false
-}
 
-function initScreen() {
-    for (let row = 0; row < noRows; row++) {
-        for (let column = 0; column < noColumns; column++) {
-            const slotCell = document.getElementById(`${row}-${column}`)
+    drawLineThree() {
+        this.binding.canvasContext.beginPath()
+        this.binding.canvasContext.moveTo(0, 460 / 2 + 460 / 6 * 2)
+        this.binding.canvasContext.lineTo(780, 460 / 2 + 460 / 6 * 2)
+        this.binding.canvasContext.strokeStyle = "#36454F"
+        this.binding.canvasContext.lineWidth = 2
+        this.binding.canvasContext.stroke()
+    }
+
+    drawLineFour() {
+        this.binding.canvasContext.beginPath()
+        this.binding.canvasContext.moveTo(0, 460 / 6)
+        this.binding.canvasContext.lineTo(75, 460 / 6)
+        this.binding.canvasContext.lineTo(390, 460 / 2 + 460 / 6 * 2)
+        this.binding.canvasContext.lineTo(705, 460 / 6)
+        this.binding.canvasContext.lineTo(780, 460 / 6)
+        this.binding.canvasContext.strokeStyle = "#A9A9A9"
+        this.binding.canvasContext.lineWidth = 2
+        this.binding.canvasContext.stroke()
+    }
+
+    drawLineFive() {
+        this.binding.canvasContext.beginPath()
+        this.binding.canvasContext.moveTo(0, 460 / 2 + 460 / 6 * 2)
+        this.binding.canvasContext.lineTo(75, 460 / 2 + 460 / 6 * 2)
+        this.binding.canvasContext.lineTo(390, 460 / 6)
+        this.binding.canvasContext.lineTo(705, 460 / 2 + 460 / 6 * 2)
+        this.binding.canvasContext.lineTo(780, 460 / 2 + 460 / 6 * 2)
+        this.binding.canvasContext.strokeStyle = "#6082B6"
+        this.binding.canvasContext.lineWidth = 2
+        this.binding.canvasContext.stroke()
+    }
+
+    drawLine(lineNumber) {
+        switch (lineNumber) {
+            case 0:
+                this.drawLineOne()
+                break;
+            case 1:
+                this.drawLineTwo()
+                break;
+            case 2:
+                this.drawLineThree()
+                break;
+            case 3:
+                this.drawLineFour()
+                break;
+            case 4:
+                this.drawLineFive()
+                break;
+        }
+    }
+
+    // TODO fix this shit
+    highlightWinningCells(lineWon) {
+        if (lineWon.line <= 2) {
+            for (let i = 0; i < lineWon.noSymbols; i++) {
+                this.binding.slotCells[lineWon.line][i].classList.add("winning-slot-keyframe")
+            }
+        } else if (lineWon.line === 3) {
+            let i = 0;
+            let j = 0;
+            let changeDirection = false;
+            while (j < lineWon.noSymbols) {
+                this.binding.slotCells[i][j].classList.add("winning-slot-keyframe")
+                if (i < NO_ROWS - 1 && !changeDirection) {
+                    i += 1;
+                } else if (i === NO_ROWS - 1 && !changeDirection) {
+                    changeDirection = true
+                    i -= 1;
+                } else {
+                    i -= 1
+                }
+                j += 1;
+            }
+        } else if (lineWon.line === 4) {
+            let i = 2
+            let j = 0
+            let changeDirection = false
+            while (j < lineWon.noSymbols) {
+                this.binding.slotCells[i][j].classList.add("winning-slot-keyframe")
+                if (i > 0 && !changeDirection) {
+                    i -= 1;
+                } else if (i === 0 && !changeDirection) {
+                    changeDirection = true
+                    i += 1;
+                } else {
+                    i += 1
+                }
+                j += 1;
+            }
+        }
+    }
+
+    highlightWinningScatterCells(positions) {
+        console.log(positions)
+        for (let [x, y] of positions) {
+            this.binding.slotCells[x][y].classList.add("winning-slot-keyframe")
+        }
+    }
+
+    drawSpinResult(spinResult) {
+        for (let winningLine of spinResult.winningLines) {
+            this.drawLine(winningLine.line)
+            this.highlightWinningCells(winningLine)
+        }
+        if (spinResult.scatterWin) {
+            this.highlightWinningScatterCells(spinResult.scatterWin.positions)
+        }
+        this.binding.currentAmountWon.style.visibility = "visible"
+        this.binding.spinButton.disabled = false
+        this.binding.doubleButton.disabled = false
+    }
+
+    stopSpinForColumn(column, spinResult) {
+        for (let row = 0; row < NO_ROWS; row++) {
+            const slotCell = this.binding.slotCells[row][column]
+            slotCell.innerHTML = ""
             const slotKeyframe = document.createElement("div")
             slotKeyframe.className = "slot-keyframe"
             const imgKeyframe = document.createElement("img")
-            const randomKeyframe = Math.floor(Math.random() * slotKeyframes.length)
-            imgKeyframe.setAttribute("src", `./${slotKeyframes[randomKeyframe]}.png`)
+            imgKeyframe.setAttribute("src", `./${spinResult.result[row][column].name}.png`)
             slotKeyframe.appendChild(imgKeyframe)
             slotCell.appendChild(slotKeyframe)
         }
-    }
-    for (let i = 1; i <= 5; i++) {
-        let cardColor = Math.random() < 0.5 ? "RED" : "BLACK"
-        document.getElementById(`last-drawn-card-${i}`).style.backgroundImage = `url(./${cardColor}_ACE.png)`
-        lastDrawnCards.push(cardColor)
-    }
-    document.getElementById("exit-double-button").addEventListener("click", () => {
-        doubleContainer.style.visibility = "hidden"
-        greyedOutBackground.style.visibility = "hidden"
-    })
-}
-
-function drawLastDrawnCards() {
-    for (let i = 0; i < 5; i++) {
-        document.getElementById(`last-drawn-card-${i + 1}`).style.backgroundImage = `url(./${lastDrawnCards[i]}_ACE.png)`
-    }
-}
-
-// TODO fix this shit
-function highlightWinningCells(lineWon) {
-    if (lineWon.line <= 2) {
-        for (let i = 0; i < lineWon.noSymbols; i++) {
-            document.getElementById(`${lineWon.line}-${i}`).classList.add("winning-slot-keyframe")
+        if (column === NO_COLUMNS - 1) {
+            this.drawSpinResult(spinResult)
         }
-    } else if (lineWon.line === 3) {
-        let i = 0;
-        let j = 0;
-        let changeDirection = false;
-        while (j < lineWon.noSymbols) {
-            document.getElementById(`${i}-${j}`).classList.add("winning-slot-keyframe")
-            if (i < noRows - 1 && !changeDirection) {
-                i += 1;
-            } else if (i === noRows - 1 && !changeDirection) {
-                changeDirection = true
-                i -= 1;
-            } else {
-                i -= 1
+    }
+
+    startSpinningAnimation() {
+        let timeout = 0;
+        for (let j = 0; j < NO_COLUMNS; j++) {
+            setTimeout(() => this.startSpinForColumn(j), timeout)
+            timeout += 200;
+        }
+    }
+
+    stopSpinningAnimation(spinResult) {
+        let timeout = 0;
+        for (let j = 0; j < NO_COLUMNS; j++) {
+            setTimeout(() => this.stopSpinForColumn(j, spinResult), timeout)
+            timeout += 200;
+        }
+    }
+
+    clearHighlights() {
+        for (let i = 0; i < NO_ROWS; i++) {
+            for (let j = 0; j < NO_COLUMNS; j++) {
+                this.binding.slotCells[i][j].classList.remove("winning-slot-keyframe")
             }
-            j += 1;
-        }
-    } else if (lineWon.line === 4) {
-        let i = 2
-        let j = 0
-        let changeDirection = false
-        while (j < lineWon.noSymbols) {
-            document.getElementById(`${i}-${j}`).classList.add("winning-slot-keyframe")
-            if (i > 0 && !changeDirection) {
-                i -= 1;
-            } else if (i === 0 && !changeDirection) {
-                changeDirection = true
-                i += 1;
-            } else {
-                i += 1
-            }
-            j += 1;
         }
     }
-}
 
-function highlightWinningScatterCells(positions) {
-    console.log(positions)
-    for (let [x, y] of positions) {
-        document.getElementById(`${x}-${y}`).classList.add("winning-slot-keyframe")
+    openDoublingScreen() {
+        this.binding.doubleRedButton.disabled = false
+        this.binding.doubleBlackButton.disabled = false
+        this.binding.exitDoubleButton.disabled = false
+        this.binding.cardFlicker.style.animationName = "flicker"
+        this.binding.doubleContainer.style.visibility = "visible"
+        this.binding.greyedOutBackground.style.visibility = "visible"
+    }
+
+    hideDoublingScreen() {
+        this.binding.doubleContainer.style.visibility = "hidden"
+        this.binding.greyedOutBackground.style.visibility = "hidden"
+    }
+
+    showDoublingResult() {
+        this.binding.cardFlicker.style.animationName = "none"
+    }
+
+    onSpinStateChanged(spinState) {
+        switch (spinState) {
+            case "SPINNING":
+                this.binding.canvasContext.clearRect(0, 0, 780, 460)
+                this.clearHighlights();
+                this.startSpinningAnimation()
+                this.binding.spinButton.disabled = true
+                this.binding.doubleButton.disabled = true
+                this.binding.currentAmountWon.style.visibility = "hidden"
+                break
+            case "DOUBLING":
+                this.openDoublingScreen()
+                break;
+            case "WAITING_FOR_DOUBLING_RESULT":
+                this.binding.doubleRedButton.disabled = true
+                this.binding.doubleBlackButton.disabled = true
+                this.binding.exitDoubleButton.disabled = true
+                break
+            case "DOUBLING_END":
+                this.hideDoublingScreen()
+                break
+            case "SHOWING_DOUBLING_RESULT":
+                this.showDoublingResult()
+        }
+    }
+
+    onAmountWon(amountWon) {
+        this.binding.amountWonSpan.innerHTML = amountWon.toFixed(2)
+    }
+
+    onAmountLost(amountLost) {
+        this.binding.amountLostSpan.innerHTML = amountLost.toFixed(2)
+    }
+
+    onCurrentWin(currentWin) {
+        this.binding.currentAmountWon.innerHTML = `Amount won: ${currentWin}`
+    }
+
+    shiftLastChosenColors(lastChosenColor) {
+        for (let i = 4; i > 0; i--) {
+            this.binding.lastChosenColors[i].style.backgroundImage = 
+                this.binding.lastChosenColors[i - 1].style.backgroundImage;
+        }
+        this.binding.lastChosenColors[0].style.backgroundImage = `url(./${lastChosenColor}_ACE.png)`
+    }
+
+    onRandomChosenColor(randomChosenColor) {
+        this.binding.cardFlicker.style.backgroundImage = `url(./${randomChosenColor}_ACE.png)`
+        this.shiftLastChosenColors(randomChosenColor)
+    }
+
+    onRustLevel(rustLevel) {
+        this.binding.docBody.style.backgroundImage = `url(./RUSTY_BG_${rustLevel}.png)`
+    }
+
+    static getInstance() {
+        if (!Renderer.instance) {
+            Renderer.instance = new Renderer()
+        }
     }
 }
 
-function drawLine(lineNumber) {
-    switch (lineNumber) {
-        case 0:
-            drawLineOne()
-            break;
-        case 1:
-            drawLineTwo()
-            break;
-        case 2:
-            drawLineThree()
-            break;
-        case 3:
-            drawLineFour()
-            break;
-        case 4:
-            drawLineFive()
-            break;
-    }
-}
+const slotKeyframes = ["ACE", "DENIS", "J", "K", "KANYE", "Q", "RARES", "TOILET", "TUDOR", "VIRUS"]
 
-function drawLineOne() {
-    context.beginPath()
-    context.moveTo(0, 460 / 6)
-    context.lineTo(780, 460 / 6)
-    context.strokeStyle = "#7393B3"
-    context.lineWidth = 2
-    context.stroke()
-}
+const rustyBackgroundThreshold = [100, 200, 300, 400]
 
-function drawLineTwo() {
-    context.beginPath()
-    context.moveTo(0, 230)
-    context.lineTo(780, 230)
-    context.strokeStyle = "#B2BEB5"
-    context.lineWidth = 2
-    context.stroke()
-}
-
-function drawLineThree() {
-    context.beginPath()
-    context.moveTo(0, 460 / 2 + 460 / 6 * 2)
-    context.lineTo(780, 460 / 2 + 460 / 6 * 2)
-    context.strokeStyle = "#36454F"
-    context.lineWidth = 2
-    context.stroke()
-}
-
-function drawLineFour() {
-    context.beginPath()
-    context.moveTo(0, 460 / 6)
-    context.lineTo(75, 460 / 6)
-    context.lineTo(390, 460 / 2 + 460 / 6 * 2)
-    context.lineTo(705, 460 / 6)
-    context.lineTo(780, 460 / 6)
-    context.strokeStyle = "#A9A9A9"
-    context.lineWidth = 2
-    context.stroke()
-}
-
-function drawLineFive() {
-    context.beginPath()
-    context.moveTo(0, 460 / 2 + 460 / 6 * 2)
-    context.lineTo(75, 460 / 2 + 460 / 6 * 2)
-    context.lineTo(390, 460 / 6)
-    context.lineTo(705, 460 / 2 + 460 / 6 * 2)
-    context.lineTo(780, 460 / 2 + 460 / 6 * 2)
-    context.strokeStyle = "#6082B6"
-    context.lineWidth = 2
-    context.stroke()
-}
-
-Array.from(document.getElementsByClassName("bet-select-cell")).forEach(element => {
-    element.addEventListener("click", clickEvent => {
-        if (clickEvent.target.innerHTML === selectedBetAmount) return
-        selectedBetAmount = clickEvent.target.innerHTML
-        selectedBetElement.classList.remove("bet-selected")
-        clickEvent.target.classList.add("bet-selected")
-        selectedBetElement = clickEvent.target
-    })
-})
+Renderer.getInstance()
