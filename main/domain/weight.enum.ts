@@ -3,5 +3,6 @@ export enum Weight {
     UNCOMMON = 0.12,
     RARE = 0.07,
     SUPER_RARE = 0.05,
-    ULTRA_RARE = 0.03
+    ULTRA_RARE = 0.03,
+    DEBUG = 0.99
 }

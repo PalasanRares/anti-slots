@@ -16,12 +16,7 @@ export class Spinner {
 
     private constructor() {}
 
-    private _spinResult: Subject<SpinResult> = new Subject()
-    get spinResultObservable(): Observable<SpinResult> {
-        return this._spinResult.asObservable()
-    }
-
-    public spin(bet: number) {
+    public spin(bet: number): SpinResult {
         const rows = numbericEnumValues(Row)
         const columns = numbericEnumValues(Column)
 
@@ -55,13 +50,13 @@ export class Spinner {
         }
         totalWon += scatterWin ? scatterWin.amountWon : 0
 
-        this._spinResult.next({
+        return {
             result,
             winningLines,
             totalWon,
             scatterWin,
             bet
-        })
+        }
     }
 
     // TODO Refactor this mess, make it pretty
