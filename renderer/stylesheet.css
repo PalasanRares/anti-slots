@@ -65,14 +65,24 @@ body {
 }
 
 @keyframes blinkRed {
-    0% { background-color: var(--rust-color); }
-    50% { background-color: red; }
-    100% { background-color: var(--rust-color); }
+    0% {
+        background-color: var(--rust-color);
+    }
+    50% {
+        background-color: red;
+    }
+    100% {
+        background-color: var(--rust-color);
+    }
 }
 
 @keyframes slideUp {
-    0% { transform: translateY(0); }
-    100% { transform: translateY(-1500px); }
+    0% {
+        transform: translateY(0);
+    }
+    100% {
+        transform: translateY(-1500px);
+    }
 }
 
 #game-container {
@@ -302,8 +312,12 @@ canvas {
 }
 
 @keyframes flicker {
-    0% { background-image: url("../assets/RED_ACE.png"); }
-    100% { background-image: url("../assets/BLACK_ACE.png"); }
+    0% {
+        background-image: url("../assets/RED_ACE.png");
+    }
+    100% {
+        background-image: url("../assets/BLACK_ACE.png");
+    }
 }
 
 #card-flicker {
