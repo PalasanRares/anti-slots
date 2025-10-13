@@ -4,16 +4,22 @@ import { alphabeticEnumValues } from "./enum-utils";
 import { Weight } from "../domain/weight.enum";
 
 export function weightedRandomSymbol(): Symbol {
-    const probabilities = alphabeticEnumValues(SymbolName).map((symbolName: string): Weight =>
-        Symbol[symbolName].weight
-    )
+    const probabilities = alphabeticEnumValues(SymbolName).map(
+        (symbolName: string): Weight => Symbol[symbolName].weight
+    );
 
     const cumulativeProbabilities: number[] = [];
-    probabilities.reduce((sum, probability, index) => cumulativeProbabilities[index] = sum + probability, 0);
+    probabilities.reduce(
+        (sum, probability, index) =>
+            (cumulativeProbabilities[index] = sum + probability),
+        0
+    );
 
     const random = Math.random();
 
-    const symbolIndex = cumulativeProbabilities.findIndex(cumulativeProbability => random < cumulativeProbability)
+    const symbolIndex = cumulativeProbabilities.findIndex(
+        (cumulativeProbability) => random < cumulativeProbability
+    );
     return alphabeticEnumValues(SymbolName)
         .map((symbolName: string): Symbol => Symbol[symbolName])
         .at(symbolIndex)!;

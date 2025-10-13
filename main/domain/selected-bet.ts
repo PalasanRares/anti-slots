@@ -1,4 +1,4 @@
 interface SelectedBet {
-    current: number,
-    last: number
+    current: number;
+    last: number;
 }
