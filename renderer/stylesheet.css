@@ -4,12 +4,14 @@
 }
 
 :root {
-    --rust-color: white;
+    --rust-color: black;
+    --rusty-red: 218, 44, 67;
 }
 
 * {
     font-family: VanillaCreamOx;
     font-weight: bolder;
+    user-select: none;
 }
 
 body {
@@ -69,7 +71,7 @@ body {
         background-color: var(--rust-color);
     }
     50% {
-        background-color: red;
+        background-color: rgb(var(--rusty-red));
     }
     100% {
         background-color: var(--rust-color);
@@ -92,15 +94,18 @@ body {
 
 .line-marker {
     border-style: solid;
-    border-width: 5px;
-    padding: 5px;
+    border-width: 3px;
+    border-color: transparent;
+    padding: 7px;
     font-size: 1.25em;
-    background-color: var(--rust-color);
+    background-color: transparent;
+    color: rgb(var(--rusty-red));
+    text-shadow: 0px 0px 5px rgb(var(--rusty-red));
 }
 
 #line-marker-1 {
     position: fixed;
-    top: calc(460px / 6 + 10px - 38px + 2.5px);
+    top: calc(460px / 6 + 10px - 38px + 1.5px);
     left: 200px;
 }
 
@@ -112,19 +117,19 @@ body {
 
 #line-marker-3 {
     position: fixed;
-    top: calc(460px / 2 + 460px / 3 + 10px - 38px + 2.5px);
+    top: calc(460px / 2 + 460px / 3 + 10px - 38px + 1.5px);
     left: 200px;
 }
 
 #line-marker-4 {
     position: fixed;
-    top: calc(460px / 6 + 10px - 2.5px);
+    top: calc(460px / 6 + 10px);
     left: 200px;
 }
 
 #line-marker-5 {
     position: fixed;
-    top: calc(460px / 2 + 460px / 3 + 10px - 2.5px);
+    top: calc(460px / 2 + 460px / 3 + 10px);
     left: 200px;
 }
 
@@ -149,52 +154,55 @@ canvas {
 #double-button {
     position: fixed;
     top: 595px;
-    left: 640px;
-    width: 100px;
-    height: 75px;
+    left: 645px;
+    width: 95px;
+    height: 45px;
+    margin-top: 9px;
+    margin-bottom: 9px;
     z-index: 0;
-    border-radius: 25%;
-    background-color: var(--rust-color);
-    border-style: solid;
-    border-color: black;
-    border-width: 5px;
-    background-image: url("../assets/DOUBLE.png");
-    background-size: 75px 75px;
-    background-position: 30px;
+    border-radius: 25px;
+    border-style: none;
+    background-color: transparent;
+    text-align: right;
+    font-size: 1.5em;
+    color: rgb(var(--rusty-red));
+    text-shadow: 0px 0px 5px rgb(var(--rusty-red));
 }
 
 #double-button:hover {
-    background-image: url("../assets/DOUBLE_FIRE.png");
-    background-color: red;
+    background-image: radial-gradient(circle at left, rgba(0, 0, 0, 0) 0, rgba(0, 0, 0, 0) 43px, rgba(var(--rusty-red), 0.5) 25px);
+    box-shadow: 0px 0px 20px rgba(var(--rusty-red), 0.5);
+    clip-path: inset(-20px -20px -20px 38px);
 }
 
 #double-button:disabled {
-    background-image: url("../assets/DOUBLE_GREYED_OUT.png");
-    background-color: gray;
+    color: white;
+    text-shadow: 0px 0px 5px white;
 }
 
 #spin-button {
-    width: 100px;
-    height: 100px;
+    width: 70px;
+    height: 70px;
+    margin: 15px;
     border-radius: 50%;
-    background-color: var(--rust-color);
+    background-color: transparent;
     border-style: solid;
-    border-color: black;
+    border-color: transparent;
     border-width: 5px;
-    font-size: 2.5em;
+    font-size: 2em;
     z-index: 1;
+    color: rgb(var(--rusty-red));
+    text-shadow: 0px 0px 5px rgb(var(--rusty-red));
 }
 
 #spin-button:hover {
-    background-color: red;
-}
-
-#spin-button:active {
-    background-color: var(--rust-color);
+    background-color: rgba(var(--rusty-red), 0.5);
+    box-shadow: 0px 0px 20px rgba(var(--rusty-red), 0.5);
 }
 
 #spin-button:disabled {
-    background-color: gray;
+    color: white;
+    text-shadow: 0 0 5px white;
 }
 
 #bet-select {
@@ -203,22 +211,25 @@ canvas {
 }
 
 .bet-select-cell {
-    width: 150px;
-    height: 50px;
-    border-style: solid;
-    border-width: 5px;
-    line-height: 50px;
+    width: 140px;
+    height: 40px;
+    margin: 10px;
+    line-height: 40px;
     text-align: center;
     font-size: 2em;
-    background-color: var(--rust-color);
+    color: rgb(var(--rusty-red));
+    text-shadow: 0px 0px 5px rgb(var(--rusty-red));
+    background-color: transparent;
 }
 
 .bet-select-cell:hover {
-    background-color: red;
+    background-color: rgba(var(--rusty-red), 0.5);
+    box-shadow: 0px 0px 20px rgba(var(--rusty-red), 0.5);
 }
 
 .bet-selected {
-    background-color: red;
+    color: white;
+    text-shadow: 0 0 5px white;
 }
 
 #footer-button-selector {
@@ -235,10 +246,13 @@ canvas {
     height: 100px;
     width: 400px;
     font-size: 3em;
-    background-color: var(--rust-color);
+    background-color: transparent;
+    color: rgb(var(--rusty-red));
+    text-shadow: 0px 0px 5px rgb(var(--rusty-red));
     border-style: solid;
     border-width: 5px;
-    border-color: black;
+    border-color: transparent;
+
 }
 
 #won-display {
@@ -248,10 +262,13 @@ canvas {
     height: 100px;
     width: 400px;
     font-size: 3em;
-    background-color: var(--rust-color);
+    background-color: transparent;
+    color: rgb(var(--rusty-red));
+    text-shadow: 0px 0px 5px rgb(var(--rusty-red));
     border-style: solid;
     border-width: 5px;
-    border-color: black;
+    border-color: transparent;
+
 }
 
 #double-container {
@@ -373,9 +390,11 @@ canvas {
     transform: translate(-50%, 0);
     font-size: 1.25em;
     visibility: hidden;
-    background-color: white;
-    border-color: black;
+    background-color: transparent;
+    color: rgb(var(--rusty-red));
+    border-color: transparent;
     border-width: 5px;
     padding: 2px;
     border-style: solid;
+    text-shadow: 0px 0px 5px rgb(var(--rusty-red));
 }

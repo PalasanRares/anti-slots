@@ -1,4 +1,8 @@
 import { combineLatest, fromEventPattern, map } from "rxjs";
+import { SlotsBinding } from "./slots-binding";
+import { initObservable } from "./utils";
+import { DrawingUtility } from "./drawing-utility";
+import { generateAceImageFileName, generateAmountWonDisplay, generateRandomSlotKeyframe, generateRustyBackgroundFileName } from "./generators";
 import {
     NO_ROWS,
     NO_COLUMNS,
@@ -15,10 +19,6 @@ import {
     SPIN_STATE_DOUBLING_END,
     SPIN_STATE_SHOWING_DOUBLING_RESULT
 } from "./constants";
-import { SlotsBinding } from "./slots-binding";
-import { initObservable } from "./utils";
-import { DrawingUtility } from "./drawing-utility";
-import { generateAceImageFileName, generateAmountWonDisplay, generateRandomSlotKeyframe, generateRustyBackgroundFileName } from "./generators";
 
 class Renderer {
     static instance = undefined;
@@ -359,7 +359,7 @@ class Renderer {
     }
 
     onRustLevel(rustLevel) {
-        this.binding.docBody.style.backgroundImage = generateRustyBackgroundFileName(rustLevel);
+        // this.binding.docBody.style.backgroundImage = generateRustyBackgroundFileName(rustLevel);
     }
 
     static getInstance() {
